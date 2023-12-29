@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.js.secondhandauction.core.item.repository.ItemRepository">
+    <insert id="create" parameterType="com.js.secondhandauction.core.item.domain.Item" useGeneratedKeys="true" keyProperty="item_no" keyColumn="item_no">
+        insert into Item
+            (item, reg_date, upt_date, reg_price, state, reg_id, bet)
+        values
+            (#{item}, NOW(), NOW(), #{reg_price}, #{state}, #{reg_id}, #{bet})
+    </insert>
+
+    <select id="get">
+        select
+            item_no,
+            item,
+            reg_date,
+            upt_date,
+            reg_price,
+            state,
+            reg_id,
+            bet
+        from Item
+        where
+            item_no = #{item_no}
+    </select>
+
+    <select id="getState">
+        select
+            state
+        from Item
+        where
+            item_no = #{item_no}
+    </select>
+
+    <update id="updateState">
+        update
+            Item
+        set state = #{state}
+            ,upt_date = NOW()
+        where
+            item_no = #{item_no}
+    </update>
+</mapper>
