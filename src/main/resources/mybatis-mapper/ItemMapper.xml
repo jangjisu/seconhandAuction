@@ -4,26 +4,26 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.js.secondhandauction.core.item.repository.ItemRepository">
-    <insert id="create" parameterType="com.js.secondhandauction.core.item.domain.Item" useGeneratedKeys="true" keyProperty="item_no" keyColumn="item_no">
+    <insert id="create" parameterType="com.js.secondhandauction.core.item.domain.Item" useGeneratedKeys="true" keyProperty="itemNo" keyColumn="item_no">
         insert into Item
-            (item, reg_date, upt_date, reg_price, state, reg_id, bet)
+            (item, reg_date, upt_date, reg_price, state, reg_id, bet_time)
         values
-            (#{item}, NOW(), NOW(), #{reg_price}, #{state}, #{reg_id}, #{bet})
+            (#{item}, NOW(), NOW(), #{regPrice}, #{state}, #{regId}, #{betTime})
     </insert>
 
     <select id="get">
         select
-            item_no,
+            item_no itemNo,
             item,
-            reg_date,
-            upt_date,
-            reg_price,
+            reg_date regDate,
+            upt_date uptDate,
+            reg_price regPrice,
             state,
-            reg_id,
-            bet
+            reg_id regId,
+            bet_time betTime
         from Item
         where
-            item_no = #{item_no}
+            item_no = #{itemNo}
     </select>
 
     <select id="getState">
@@ -31,15 +31,15 @@
             state
         from Item
         where
-            item_no = #{item_no}
+            item_no = #{itemNo}
     </select>
 
     <update id="updateState">
         update
             Item
         set state = #{state}
-            ,upt_date = NOW()
+          ,upt_date = NOW()
         where
-            item_no = #{item_no}
+            item_no = #{itemNo}
     </update>
 </mapper>

@@ -9,7 +9,6 @@ public interface UserRepository {
 
     User get(long id);
 
-    void plusAmount(long id, int amount);
+    void updateTotalBalance(long id, int totalBalance);
 
-    void minusAmount(long id, int amount);
 }

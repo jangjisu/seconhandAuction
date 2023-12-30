@@ -6,21 +6,21 @@
 <mapper namespace="com.js.secondhandauction.core.auction.repository.AuctionRepository">
     <insert id="create" parameterType="com.js.secondhandauction.core.auction.domain.Auction" useGeneratedKeys="true" keyProperty="auction_no" keyColumn="auction_no">
         insert into Auction
-            (item_no, price, reg_id, reg_date)
+            (item_no, bid, reg_id, reg_date)
         values
-            (#{item_no}, #{price}, #{reg_id}, NOW())
+            (#{itemNo}, #{bid}, #{regId}, NOW())
     </insert>
 
     <select id="getMax">
         SELECT
             item_no,
-            price,
+            bid,
             reg_id
         FROM Auction
-        WHERE (item_no, price) IN (
-            SELECT item_no, MAX(price)
+        WHERE (item_no, bid) IN (
+            SELECT item_no, MAX(bid)
             FROM Auction
-            WHERE ITEM_NO = #{item_no}
+            WHERE ITEM_NO = #{itemNo}
             GROUP BY item_no
         )
     </select>
@@ -30,6 +30,6 @@
             count(*)
         from Auction
         where
-            item_no = #{item_no}
+            item_no = #{itemNo}
     </select>
 </mapper>

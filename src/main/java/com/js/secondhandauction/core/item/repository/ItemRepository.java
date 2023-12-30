@@ -8,9 +8,9 @@ import org.apache.ibatis.annotations.Mapper;
 public interface ItemRepository {
     long create(Item item);
 
-    Item get(long item_no);
+    Item get(long itemNo);
 
-    State getState(long item_no);
+    State getState(long itemNo);
 
-    void updateState(Long item_no, State state);
+    void updateState(long itemNo, State state);
 }
