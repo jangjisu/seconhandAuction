@@ -5,11 +5,10 @@ import com.js.secondhandauction.core.user.service.UserService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
@@ -20,12 +19,13 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("유저 생성 테스트")
+    @Transactional
     void createUser() {
         User user = new User();
         //user.setAmount(1000000);
         user.setName("test2");
 
-        Long id = userService.create(user);
+        long id = userService.create(user);
 
         //System.out.println("******* - id = " + user.getId());
         //System.out.println("======" + userService.getUser(user.getId()).getId());
@@ -35,21 +35,19 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("유저 조회 테스트")
+    @Transactional
     void getUser() {
-       long id = 1L;
+        long id = 9L;
 
-       User user = userService.get(id);
+        User user = userService.get(id);
 
-        //System.out.println(user.getName());
-        //System.out.println(user.getAmount());
-
-        Assertions.assertThat(user.getAmount()).isEqualTo(10000000);
+        Assertions.assertThat(user.getTotalBalance()).isEqualTo(10000000);
     }
 
     @Test
     @DisplayName("유저 조회 실패 테스트")
     void getFailUser() {
-        long id = 2L;
+        long id = 10L;
 
         User user = userService.get(id);
 
@@ -58,6 +56,7 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("금액 업데이트 성공 테스트")
+    @Transactional
     void updateAmount() {
         User user1 = userService.get(1L);
 
@@ -65,7 +64,7 @@ public class UserServiceTest {
 
         User user2 = userService.get(1L);
 
-        Assertions.assertThat(user1.getAmount()-500000).isEqualTo(user2.getAmount());
+        Assertions.assertThat(user1.getTotalBalance()-500000).isEqualTo(user2.getTotalBalance());
     }
 
     @Test

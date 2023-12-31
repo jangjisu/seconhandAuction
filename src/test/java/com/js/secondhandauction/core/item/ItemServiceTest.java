@@ -8,8 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Date;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 public class ItemServiceTest {
@@ -18,16 +17,19 @@ public class ItemServiceTest {
 
     @Test
     @DisplayName("상품 생성 테스트")
+    @Transactional
     void createItem() {
-        Item item = new Item();
+        //Item item = new Item();
 
 
-        item.setItem("에어팟");
-        item.setReg_id(1L);
-        item.setState(State.ONSALE);
-        item.setReg_price(10000);
+        //item.setItem("에어팟");
+        //item.setRegId(1L);
+        //item.setState(State.ONSALE);
+        //item.setRegPrice(10000);
 
-        Long item_no = itemService.create("에어팟", 200000, 1L);
+        long itemNo = itemService.create("에어팟", 200000, 1L);
+
+        System.out.println(itemNo);
 
     }
 

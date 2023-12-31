@@ -22,7 +22,7 @@ public class UserService {
     }
 
     /**
-     * 회원가입-V2
+     * 회원가입
      */
     public long create(String name) {
         User user = new User();
@@ -33,7 +33,7 @@ public class UserService {
     }
 
     /**
-     * 회원가입-V2
+     * 회원가입
      */
     public long create(String name, int totalBalance) {
         User user = new User();

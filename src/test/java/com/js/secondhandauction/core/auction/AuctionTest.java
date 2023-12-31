@@ -1,22 +1,13 @@
 package com.js.secondhandauction.core.auction;
 
-import com.js.secondhandauction.core.auction.domain.Auction;
 import com.js.secondhandauction.core.auction.service.AuctionService;
-import com.js.secondhandauction.core.item.domain.Item;
-import com.js.secondhandauction.core.item.domain.State;
 import com.js.secondhandauction.core.item.service.ItemService;
-import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.service.UserService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -32,104 +23,105 @@ public class AuctionTest {
     @Autowired
     AuctionService auctionService;
 
-    List<Long> registUser() {
+    long[] regUser() {
         String[] participant = {"1번", "2번", "3번", "4번"};
 
-        List<Long> user_id = new ArrayList<Long>();
-        for (String s : participant) {
-            user_id.add(userService.create(s));
+        long[] userId = new long[participant.length];
+
+        for (int i=0; i< participant.length; i++) {
+            userId[i] = userService.create(participant[i]);
         }
-        return user_id;
+        return userId;
 
     }
 
-    List<Long> registItem() {
-        
+    long[] regItem() {
+
         String[] item = {"item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10"};
 
-        List<Long> item_id = new ArrayList<Long>();
-        for (String s : item) {
-            item_id.add(itemService.create(s, 400000, 1L));
+        long[] itemId = new long[item.length];
+        for (int i=0; i< item.length; i++) {
+            itemId[i] = itemService.create(item[i], 400000, 1L);
         }
 
-        return item_id;
+        return itemId;
     }
 
     @Test
     @DisplayName("최고입찰자 또 입찰")
     @Transactional
     void auctionFailTest_duplicateUser() {
-        List<Long> user_id = registUser();
-        List<Long> item_id = registItem();
+        long[] userId = regUser();
+        long[] itemId = regItem();
 
-        duplicateAuction(item_id.get(0), user_id.get(0));
+        duplicateAuction(itemId[0], userId[0]);
 
         assertThrows(IllegalArgumentException.class,
-                () -> duplicateAuction(item_id.get(0), user_id.get(0)));
+                () -> duplicateAuction(itemId[0], userId[0]));
     }
 
-    void duplicateAuction(Long item_id, Long user_id) {
-        auctionService.create(item_id, user_id, 500000);
-        auctionService.create(item_id, user_id, 1500000);
+    void duplicateAuction(long itemId, long userId) {
+        auctionService.create(itemId, userId, 500000);
+        auctionService.create(itemId, userId, 1500000);
     }
 
     @Test
     @DisplayName("입찰금액 총금액 초과")
     @Transactional
     void auctionFailTest_accessAmount() {
-        List<Long> user_id = registUser();
-        List<Long> item_id = registItem();
+        long[] userId = regUser();
+        long[] itemId = regItem();
 
-        overAmount(item_id.get(0), item_id.get(1), user_id.get(0));
+        overAmount(itemId[0], itemId[1], userId[0]);
 
         assertThrows(IllegalArgumentException.class,
-                () -> overAmount(item_id.get(0), item_id.get(1), user_id.get(0)));
+                () -> overAmount(itemId[0], itemId[1], userId[0]));
     }
 
-    void overAmount(Long item_id1, Long item_id2, Long user_id) {
-        auctionService.create(item_id1, user_id, 5000000);
-        auctionService.create(item_id2, user_id, 6000000);
+    void overAmount(long itemId1, long itemId2, long userId) {
+        auctionService.create(itemId1, userId, 5000000);
+        auctionService.create(itemId2, userId, 6000000);
     }
 
     @Test
     @DisplayName("종료된 item에 입찰")
     @Transactional
     void auctionFailTest_endAuction() {
-        List<Long> user_id = registUser();
-        List<Long> item_id = registItem();
+        long[] userId = regUser();
+        long[] itemId = regItem();
 
-        auctionSuccess(item_id.get(0), user_id.get(0), user_id.get(1));
+        auctionSuccess(itemId[0], userId[0], userId[1]);
 
-        //auctionService.create(item_id.get(0), user_id.get(2), 1500000);
+        //auctionService.create(itemId[0], userId[2], 1500000);
 
         assertThrows(IllegalArgumentException.class,
-                () -> auctionService.create(item_id.get(0), user_id.get(2), 1500000));
+                () -> auctionService.create(itemId[0], userId[2], 1500000));
     }
 
-    void auctionSuccess(Long item_id, Long user_id1, Long user_id2) {
-        auctionService.create(item_id, user_id1, 500000);
-        auctionService.create(item_id, user_id2, 600000);
-        auctionService.create(item_id, user_id1, 700000);
-        auctionService.create(item_id, user_id2, 800000);
-        auctionService.create(item_id, user_id1, 900000);
-        auctionService.create(item_id, user_id2, 1000000);
-        auctionService.create(item_id, user_id1, 1100000);
-        auctionService.create(item_id, user_id2, 1200000);
-        auctionService.create(item_id, user_id1, 1300000);
-        auctionService.create(item_id, user_id2, 1400000);
+    void auctionSuccess(long itemId, long userId1, long userId2) {
+        auctionService.create(itemId, userId1, 500000);
+        auctionService.create(itemId, userId2, 600000);
+        auctionService.create(itemId, userId1, 700000);
+        auctionService.create(itemId, userId2, 800000);
+        auctionService.create(itemId, userId1, 900000);
+        auctionService.create(itemId, userId2, 1000000);
+        auctionService.create(itemId, userId1, 1100000);
+        auctionService.create(itemId, userId2, 1200000);
+        auctionService.create(itemId, userId1, 1300000);
+        auctionService.create(itemId, userId2, 1400000);
     }
 
     @Test
     @DisplayName("최소 입찰 금액 초과")
     @Transactional
     void auctionFailTest_minAmount() {
-        List<Long> user_id = registUser();
-        List<Long> item_id = registItem();
+        long[] userId = regUser();
+        long[] itemId = regItem();
 
-        //auctionService.create(item_id.get(0), user_id.get(0), 104000);
+        //auctionService.create(itemId[0], userId[0], 104000);
 
         assertThrows(IllegalArgumentException.class,
-                () -> auctionService.create(item_id.get(0), user_id.get(0), 104000));
+                () -> auctionService.create(itemId[0], userId[0], 104000));
     }
 
 

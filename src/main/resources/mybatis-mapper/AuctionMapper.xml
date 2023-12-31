@@ -4,14 +4,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.js.secondhandauction.core.auction.repository.AuctionRepository">
-    <insert id="create" parameterType="com.js.secondhandauction.core.auction.domain.Auction" useGeneratedKeys="true" keyProperty="auction_no" keyColumn="auction_no">
+    <insert id="create" parameterType="com.js.secondhandauction.core.auction.domain.Auction" useGeneratedKeys="true" keyProperty="auctionNo" keyColumn="auction_no">
         insert into Auction
             (item_no, bid, reg_id, reg_date)
         values
             (#{itemNo}, #{bid}, #{regId}, NOW())
     </insert>
 
-    <select id="getMax">
+    <select id="getLastTick">
         SELECT
             item_no,
             bid,
@@ -25,7 +25,7 @@
         )
     </select>
 
-    <select id="getCount">
+    <select id="getCountTick">
         select
             count(*)
         from Auction
