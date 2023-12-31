@@ -16,7 +16,7 @@ public class UserService {
     /**
      * 회원가입
      */
-    public Long create(User user) {
+    public long create(User user) {
         userRepository.create(user);
         return user.getId();
     }
@@ -24,7 +24,7 @@ public class UserService {
     /**
      * 회원가입-V2
      */
-    public Long create(String name) {
+    public long create(String name) {
         User user = new User();
         user.setName(name);
 
@@ -35,10 +35,10 @@ public class UserService {
     /**
      * 회원가입-V2
      */
-    public Long create(String name, int amount) {
+    public long create(String name, int totalBalance) {
         User user = new User();
         user.setName(name);
-        user.setAmount(amount);
+        user.setTotalBalance(totalBalance);
 
         userRepository.create(user);
         return user.getId();
@@ -47,16 +47,16 @@ public class UserService {
     /**
      * 회원 조회
      */
-    public User get(Long id) {
+    public User get(long id) {
         return userRepository.get(id);
     }
 
     /**
      * 회원 가진금액 더하기
      */
-    public void plusAmount(Long id, int amount) {
-        if(userRepository.get(id).getAmount() + amount > 0) {
-            userRepository.plusAmount(id, amount);
+    public void plusAmount(long id, int totalBalance) {
+        if(userRepository.get(id).getTotalBalance() + totalBalance > 0) {
+            userRepository.updateTotalBalance(id, totalBalance);
         }else{
             throw new IllegalArgumentException("가진 금액이 마이너스가 될 수 없습니다");
         }
@@ -65,9 +65,10 @@ public class UserService {
     /**
      * 회원 가진금액 빼기
      */
-    public void minusAmount(Long id, int amount) {
-        if(userRepository.get(id).getAmount() - amount > 0) {
-            userRepository.minusAmount(id, amount);
+    public void minusAmount(long id, int totalBalance) {
+        if(userRepository.get(id).getTotalBalance() - totalBalance > 0) {
+            totalBalance = -1 * totalBalance;
+            userRepository.updateTotalBalance(id, totalBalance);
         }else{
             throw new IllegalArgumentException("가진 금액이 마이너스가 될 수 없습니다");
         }

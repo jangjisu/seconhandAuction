@@ -4,38 +4,36 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.js.secondhandauction.core.user.repository.UserRepository">
-    <insert id="create" parameterType="com.js.secondhandauction.core.user.domain.User" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    <insert id="create" parameterType="com.js.secondhandauction.core.user.domain.User" useGeneratedKeys="true" keyProperty="id">
+    <![CDATA[
         insert into Users
-            (name, amount, reg_date, upt_date)
+            (name, total_balance, reg_date, upt_date)
         values
-            (#{name}, #{amount}, NOW(), NOW())
+            (#{name}, #{totalBalance}, NOW(), NOW())
+        ]]>
     </insert>
 
     <select id="get">
+    <![CDATA[
         select
             id,
             name,
-            amount,
-            reg_date,
-            upt_date
+            total_balance totalBalance,
+            reg_date regDate,
+            upt_date uptDate
         from Users
         where
             id = #{id}
+        ]]>
     </select>
 
-    <update id="plusAmount">
+    <update id="updateTotalBalance">
+    <![CDATA[
         update
             Users
-        set amount = amount + #{amount}
-            ,upt_date = NOW()
+        set total_balanace = total_balanace + #{totalBalance}
+          ,upt_date = NOW()
         where id = #{id}
-    </update>
-
-    <update id="minusAmount">
-        update
-            Users
-        set amount = amount - #{amount}
-            ,upt_date = NOW()
-        where id = #{id}
+        ]]>
     </update>
 </mapper>

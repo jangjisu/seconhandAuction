@@ -4,10 +4,8 @@ import com.js.secondhandauction.core.auction.domain.Auction;
 import com.js.secondhandauction.core.auction.repository.AuctionRepository;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
-import com.js.secondhandauction.core.item.repository.ItemRepository;
 import com.js.secondhandauction.core.item.service.ItemService;
 import com.js.secondhandauction.core.user.domain.User;
-import com.js.secondhandauction.core.user.repository.UserRepository;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,75 +33,75 @@ public class AuctionService {
     /**
      * 경매 등록
      */
-    public Long create(Long item_no, Long reg_id, int price) {
+    public long create(long itemNo, long regId, int bid) {
         Auction auction = new Auction();
-        auction.setItem_no(item_no);
-        auction.setPrice(price);
-        auction.setReg_id(reg_id);
+        auction.setItemNo(itemNo);
+        auction.setBid(bid);
+        auction.setRegId(regId);
 
 
 
-        User user = userService.get(reg_id);
+        User user = userService.get(regId);
         if(user == null){
             throw new IllegalArgumentException("사용자가 존재하지 않음");
         }
 
-        Item itemforSale = itemService.get(item_no);
+        Item itemforSale = itemService.get(itemNo);
         if(itemforSale.getState().equals(State.SOLDOUT)){
             throw new IllegalArgumentException("아이템이 판매 종료됨");
         }
 
-        if(user.getAmount() < price){
+        if(user.getTotalBalance() < bid){
             throw new IllegalArgumentException("가진돈보다 더 큰 금액을 배팅함");
         }
 
-        Auction maxAuction = auctionRepository.getMax(item_no);
+        Auction maxAuction = auctionRepository.getMax(itemNo);
 
-        int priceForCompare = (maxAuction == null) ? itemforSale.getReg_price() * (100 + min_betting_percent) / 100 : maxAuction.getPrice() + itemforSale.getReg_price() * min_betting_percent / 100;
+        int priceForCompare = (maxAuction == null) ? itemforSale.getRegPrice() * (100 + min_betting_percent) / 100 : maxAuction.getBid() + itemforSale.getRegPrice() * min_betting_percent / 100;
 
-        if(price < priceForCompare){
+        if(bid < priceForCompare){
             throw new IllegalArgumentException("최소 경매금액 아래 베팅");
         }
 
-        boolean immediate_purchase_YN = false;
+        boolean immediate_purchase_YN;
         if(maxAuction == null){
-            immediate_purchase_YN = (itemforSale.getReg_price() * immediate_purchase_rate < auction.getPrice());
+            immediate_purchase_YN = (itemforSale.getRegPrice() * immediate_purchase_rate < auction.getBid());
         }else{
-            immediate_purchase_YN = (maxAuction.getPrice() * immediate_purchase_rate < auction.getPrice());
+            immediate_purchase_YN = (maxAuction.getBid() * immediate_purchase_rate < auction.getBid());
         }
 
 
 
 
-        if(maxAuction.getPrice() > price){
+        if(maxAuction.getBid() > bid){
             throw new IllegalArgumentException("입찰 금액이 최고금액보다 더 작음");
         }
-        if(maxAuction.getReg_id().equals(reg_id)) {
+        if(maxAuction.getRegId() == regId) {
             throw new IllegalArgumentException("최고입찰자가 또 입찰함");
         }
 
         //배팅자 없거나, 이미 배팅된 금액중 가장 큰 금액인지, 가장 큰 금액 베팅자 본인인지 확인
 
-        userService.minusAmount(reg_id, price);
+        userService.minusAmount(regId, bid);
 
         auctionRepository.create(auction);
 
-        int count = auctionRepository.getCount(item_no);
+        int count = auctionRepository.getCount(itemNo);
         //bet -1 번째 일 경우 경매 종료
-        if(count == itemforSale.getBet()-1 || immediate_purchase_YN) {
+        if(count == itemforSale.getBetTime()-1 || immediate_purchase_YN) {
             if(maxAuction != null){
-                userService.plusAmount(maxAuction.getReg_id(), maxAuction.getPrice());
+                userService.plusAmount(maxAuction.getRegId(), maxAuction.getBid());
             }
 
-            userService.plusAmount(itemforSale.getReg_id(), price);
+            userService.plusAmount(itemforSale.getRegId(), bid);
 
-            itemService.updateState(item_no, State.SOLDOUT);
+            itemService.updateState(itemNo, State.SOLDOUT);
 
             System.out.println("입찰 종료");
 
         }
 
-        return auction.getAuction_no();
+        return auction.getAuctionNo();
 
 
     }
