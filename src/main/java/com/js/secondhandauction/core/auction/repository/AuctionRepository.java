@@ -9,8 +9,8 @@ public interface AuctionRepository {
 
     long create(Auction auction);
 
-    Auction getMax(long item_no);
+    Auction getLastTick(long item_no);
 
-    int getCount(long item_no);
+    int getCountTick(long item_no);
 
 }

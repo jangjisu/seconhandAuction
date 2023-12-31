@@ -31,7 +31,7 @@
     <![CDATA[
         update
             Users
-        set total_balanace = total_balanace + #{totalBalance}
+        set total_balance = total_balance + #{totalBalance}
           ,upt_date = NOW()
         where id = #{id}
         ]]>
