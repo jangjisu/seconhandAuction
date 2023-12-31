@@ -1,16 +1,24 @@
 package com.js.secondhandauction.core.auction.service;
 
+import com.js.secondhandauction.common.exception.ErrorCode;
 import com.js.secondhandauction.core.auction.domain.Auction;
+import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
+import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
 import com.js.secondhandauction.core.auction.repository.AuctionRepository;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
+import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
 import com.js.secondhandauction.core.item.service.ItemService;
 import com.js.secondhandauction.core.user.domain.User;
+import com.js.secondhandauction.core.user.exception.NotFoundUserException;
+import com.js.secondhandauction.core.user.exception.NotOverTotalBalanceException;
 import com.js.secondhandauction.core.user.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class AuctionService {
 
     AuctionRepository auctionRepository;
@@ -37,17 +45,17 @@ public class AuctionService {
 
         User user = userService.get(regId);
         if(user == null){
-            throw new IllegalArgumentException("사용자가 존재하지 않음");
+            throw new NotFoundUserException();
         }
 
         Item item = itemService.get(itemNo);
         //상수 Equals 변수 형식으로 변경
         if(State.SOLDOUT.equals(item.getState())){
-            throw new IllegalArgumentException("아이템이 판매 종료됨");
+            throw new AlreadySoldoutException();
         }
 
         if(user.getTotalBalance() < bid){
-            throw new IllegalArgumentException("가진돈보다 더 큰 금액을 배팅함");
+            throw new NotOverTotalBalanceException();
         }
 
         int countTick = auctionRepository.getCountTick(itemNo);
@@ -66,10 +74,10 @@ public class AuctionService {
             isImmediatePurchase = (lastTick.getBid() * immediate_purchase_rate < bid);
 
             if(lastTick.getBid() > bid){
-                throw new IllegalArgumentException("입찰 금액이 최고금액보다 더 작음");
+                throw new NotOverMinBidException();
             }
             if(lastTick.getRegId() == regId) {
-                throw new IllegalArgumentException("최고입찰자가 또 입찰함");
+                throw new DuplicateUserTickException();
             }
         }else{
             minBid = item.getRegPrice();
@@ -78,7 +86,7 @@ public class AuctionService {
         }
 
         if(bid < minBid){
-            throw new IllegalArgumentException("최소 경매금액 아래 베팅");
+            throw new NotOverMinBidException();
         }
 
         userService.minusAmount(regId, bid);
@@ -100,7 +108,7 @@ public class AuctionService {
 
             itemService.updateState(itemNo, State.SOLDOUT);
 
-            System.out.println("입찰 종료");
+            log.debug(item.getItem() + "(" + itemNo + ") 입찰 종료");
 
         }
 
