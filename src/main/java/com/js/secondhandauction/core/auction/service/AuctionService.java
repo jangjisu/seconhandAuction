@@ -7,6 +7,7 @@ import com.js.secondhandauction.core.auction.repository.AuctionRepository;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
 import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
+import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.service.ItemService;
 import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.exception.NotFoundUserException;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AuctionService {
 
+    @Autowired
     AuctionRepository auctionRepository;
 
     @Autowired
@@ -29,9 +31,10 @@ public class AuctionService {
     @Autowired
     UserService userService;
 
-    final int min_betting_percent = 5;
+    final int MIN_BETTING_PERCENT = 5;
 
-    final int immediate_purchase_rate = 3;
+    final int IMMEDIATE_PURCHASE_RATE_START_PRICE = 3;
+    final int IMMEDIATE_PURCHASE_RATE_LAST_BID = 2;
 
 public AuctionService(AuctionRepository auctionRepository) {
         this.auctionRepository = auctionRepository;
@@ -41,81 +44,111 @@ public AuctionService(AuctionRepository auctionRepository) {
      * 경매 등록
      */
     @Transactional
-    public long create(long itemNo, long regId, int bid) {
+    public long create(Auction auction) {
 
-        User user = userService.get(regId);
-        if(user == null){
-            throw new NotFoundUserException();
+        validateUser(auction);
+
+        Item item = validateItem(auction);
+
+        int countTick = auctionRepository.getCountTick(auction.getItemNo());
+
+        boolean isTick = (countTick != 0);
+
+        boolean isImmediatePurchase;
+        Auction lastTick = null;
+
+        if(isTick){
+            lastTick = validateBidForExistingTicks(auction, item.getRegPrice());
+            isImmediatePurchase = isImmediatelyPurchasableByLastBid(lastTick.getBid(), auction.getBid());
+        }else{
+            validateBidForInitialBid(item, auction.getBid());
+            isImmediatePurchase = isImmediatelyPurchasableByRegPrice(item.getRegPrice(), auction.getBid());
         }
 
-        Item item = itemService.get(itemNo);
+        updateUserBalanceAndCreateAuction(auction, lastTick);
+
+        if(isFinalBid(countTick, item.getBetTime()) || isImmediatePurchase) {
+            finishAuction(auction, item);
+        }
+
+        return auction.getAuctionNo();
+    }
+
+    private void validateUser(Auction auction) {
+        User user = userService.get(auction.getRegId()).orElseThrow(NotFoundUserException::new);
+
+        if(user.getTotalBalance() < auction.getBid()){
+            throw new NotOverTotalBalanceException();
+        }
+
+        //return user;
+    }
+
+    private Item validateItem(Auction auction) {
+        Item item = itemService.get(auction.getItemNo()).orElseThrow(NotFoundItemException::new);
+
         //상수 Equals 변수 형식으로 변경
         if(State.SOLDOUT.equals(item.getState())){
             throw new AlreadySoldoutException();
         }
 
-        if(user.getTotalBalance() < bid){
-            throw new NotOverTotalBalanceException();
+        return item;
+    }
+
+    private Auction validateBidForExistingTicks(Auction auction, int regPrice) {
+        Auction lastTick = auctionRepository.getLastTick(auction.getItemNo());
+
+        if(lastTick.getRegId() == auction.getRegId()) {
+            throw new DuplicateUserTickException();
         }
 
-        int countTick = auctionRepository.getCountTick(itemNo);
+        int minBid = lastTick.getBid() + (regPrice * MIN_BETTING_PERCENT / 100);
 
-        boolean isTick = (countTick != 0);
-
-        int minBid;
-        boolean isImmediatePurchase;
-        Auction lastTick = null;
-
-        if(isTick){
-            lastTick = auctionRepository.getLastTick(itemNo);
-
-            minBid = lastTick.getBid() + item.getRegPrice() * min_betting_percent / 100;
-
-            isImmediatePurchase = (lastTick.getBid() * immediate_purchase_rate < bid);
-
-            if(lastTick.getBid() > bid){
-                throw new NotOverMinBidException();
-            }
-            if(lastTick.getRegId() == regId) {
-                throw new DuplicateUserTickException();
-            }
-        }else{
-            minBid = item.getRegPrice();
-
-            isImmediatePurchase = (item.getRegPrice() * immediate_purchase_rate < bid);
-        }
-
-        if(bid < minBid){
+        if (auction.getBid() < minBid) {
             throw new NotOverMinBidException();
         }
 
-        userService.minusAmount(regId, bid);
+        return lastTick;
+    }
 
-        if(isTick){
+    private void validateBidForInitialBid(Item item, int bid) {
+        int minBid = item.getRegPrice();
+
+        if (bid < minBid) {
+            throw new NotOverMinBidException();
+        }
+    }
+
+    private boolean isImmediatelyPurchasableByRegPrice(int regPrice, int bid) {
+        return regPrice * IMMEDIATE_PURCHASE_RATE_START_PRICE < bid;
+    }
+
+    private boolean isImmediatelyPurchasableByLastBid(int lastBid, int bid) {
+        return lastBid * IMMEDIATE_PURCHASE_RATE_LAST_BID < bid;
+    }
+
+
+    private void updateUserBalanceAndCreateAuction(Auction auction, Auction lastTick) {
+        userService.minusAmount(auction.getRegId(), auction.getBid());
+
+        if(lastTick != null){
             userService.plusAmount(lastTick.getRegId(), lastTick.getBid());
         }
 
-        Auction auction = new Auction();
-        auction.setItemNo(itemNo);
-        auction.setBid(bid);
-        auction.setRegId(regId);
-
         auctionRepository.create(auction);
+    }
 
-        //bet -1 번째 일 경우 경매 종료
-        if(countTick == item.getBetTime()-1 || isImmediatePurchase) {
+    private boolean isFinalBid(int countTick, int betTime) {
+        return betTime-1 == countTick;
+    }
 
-            userService.plusAmount(item.getRegId(), bid);
+    private void finishAuction(Auction auction, Item item) {
+        userService.plusAmount(item.getRegId(), auction.getBid());
 
-            itemService.updateState(itemNo, State.SOLDOUT);
+        itemService.updateState(item.getItemNo(), State.SOLDOUT);
 
-            log.debug(item.getItem() + "(" + itemNo + ") 입찰 종료");
-
-        }
-
-        return auction.getAuctionNo();
-
-
+        //log.debug("{}({}) 입찰 종료", item.getItem(), itemNo);
+        log.debug(item.getItem() + "(" + item.getItemNo() + ") 입찰 종료");
     }
 
 }

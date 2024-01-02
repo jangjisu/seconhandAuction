@@ -1,11 +1,14 @@
 package com.js.secondhandauction.core.auction;
 
+import com.js.secondhandauction.core.auction.domain.Auction;
 import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
 import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
 import com.js.secondhandauction.core.auction.service.AuctionService;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
+import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.service.ItemService;
+import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.exception.NotOverTotalBalanceException;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
@@ -29,12 +32,15 @@ public class AuctionTest {
     AuctionService auctionService;
 
     long[] regUser() {
-        String[] participant = {"1번", "2번", "3번", "4번"};
+        String[] participant = {"1번", "2번", "3번", "4번", "5번", "6번", "7번", "8번"};
 
         long[] userId = new long[participant.length];
 
         for (int i=0; i< participant.length; i++) {
-            userId[i] = userService.create(participant[i]);
+            User user = new User();
+            user.setName(participant[i]);
+
+            userId[i] = userService.create(user);
         }
         return userId;
 
@@ -42,11 +48,16 @@ public class AuctionTest {
 
     long[] regItem() {
 
-        String[] item = {"item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10"};
+        String[] itemName = {"item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9", "item10"};
 
-        long[] itemId = new long[item.length];
-        for (int i=0; i< item.length; i++) {
-            itemId[i] = itemService.create(item[i], 400000, 1L);
+        long[] itemId = new long[itemName.length];
+        for (int i=0; i< itemName.length; i++) {
+            Item item = new Item();
+            item.setRegId(1L);
+            item.setItem(itemName[i]);
+            item.setRegPrice(400000);
+
+            itemId[i] = itemService.create(item);
         }
 
         return itemId;
@@ -59,15 +70,26 @@ public class AuctionTest {
         long[] userId = regUser();
         long[] itemId = regItem();
 
-        duplicateAuction(itemId[0], userId[0]);
+        //duplicateAuction(itemId[0], userId[0]);
 
         assertThrows(DuplicateUserTickException.class,
                 () -> duplicateAuction(itemId[0], userId[0]));
     }
 
     void duplicateAuction(long itemId, long userId) {
-        auctionService.create(itemId, userId, 500000);
-        auctionService.create(itemId, userId, 1500000);
+        Auction auction1 = new Auction();
+        auction1.setItemNo(itemId);
+        auction1.setRegId(userId);
+        auction1.setBid(500000);
+
+        Auction auction2 = new Auction();
+        auction2.setItemNo(itemId);
+        auction2.setRegId(userId);
+        auction2.setBid(1500000);
+
+
+        auctionService.create(auction1);
+        auctionService.create(auction2);
     }
 
     @Test
@@ -80,12 +102,22 @@ public class AuctionTest {
         //overAmount(itemId[0], itemId[1], userId[0]);
 
         assertThrows(NotOverTotalBalanceException.class,
-                () -> overAmount(itemId[0], itemId[1], userId[0]));
+                () -> overAmount(itemId[1], itemId[2], userId[1]));
     }
 
     void overAmount(long itemId1, long itemId2, long userId) {
-        auctionService.create(itemId1, userId, 5000000);
-        auctionService.create(itemId2, userId, 6000000);
+        Auction auction1 = new Auction();
+        auction1.setItemNo(itemId1);
+        auction1.setRegId(userId);
+        auction1.setBid(5000000);
+
+        Auction auction2 = new Auction();
+        auction2.setItemNo(itemId2);
+        auction2.setRegId(userId);
+        auction2.setBid(6000000);
+
+        auctionService.create(auction1);
+        auctionService.create(auction2);
     }
 
     @Test
@@ -95,24 +127,40 @@ public class AuctionTest {
         long[] userId = regUser();
         long[] itemId = regItem();
 
-        auctionSuccess(itemId[0], userId[0], userId[1]);
+        auctionSuccess(itemId[3], userId[2], userId[3]);
 
         //auctionService.create(itemId[0], userId[2], 1500000);
 
+        Auction auction = new Auction();
+        auction.setItemNo(itemId[3]);
+        auction.setRegId(userId[4]);
+        auction.setBid(1500000);
+
         assertThrows(AlreadySoldoutException.class,
-                () -> auctionService.create(itemId[0], userId[2], 1500000));
+                () -> auctionService.create(auction));
     }
 
     void auctionSuccess(long itemId, long userId1, long userId2) {
         int bid = 500000;
 
-        Item item = itemService.get(itemId);
+        Item item = itemService.get(itemId).orElseThrow(NotFoundItemException::new);
 
         for(int i=0; i<item.getBetTime(); i ++){
+            Auction auction1 = new Auction();
+            auction1.setItemNo(itemId);
+            auction1.setRegId(userId1);
+            auction1.setBid(bid);
+
+            Auction auction2 = new Auction();
+            auction2.setItemNo(itemId);
+            auction2.setRegId(userId2);
+            auction2.setBid(bid);
+
+
             if(i%2 == 0){
-                auctionService.create(itemId, userId1, bid);
+                auctionService.create(auction1);
             }else{
-                auctionService.create(itemId, userId2, bid);
+                auctionService.create(auction2);
             }
 
             System.out.println(userService.get(userId1).toString());
@@ -131,8 +179,13 @@ public class AuctionTest {
 
         //auctionService.create(itemId[0], userId[0], 104000);
 
+        Auction auction = new Auction();
+        auction.setItemNo(itemId[4]);
+        auction.setRegId(userId[5]);
+        auction.setBid(104000);
+
         assertThrows(NotOverMinBidException.class,
-                () -> auctionService.create(itemId[0], userId[0], 104000));
+                () -> auctionService.create(auction));
     }
 
 

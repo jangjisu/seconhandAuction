@@ -6,6 +6,8 @@ import com.js.secondhandauction.core.item.repository.ItemRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @Slf4j
 public class ItemService {
@@ -19,11 +21,7 @@ public class ItemService {
     /**
      * 상품등록
      */
-    public long create(String itemName, int price, long regId) {
-        Item item = new Item();
-        item.setItem(itemName);
-        item.setRegPrice(price);
-        item.setRegId(regId);
+    public long create(Item item) {
         item.setState(State.ONSALE);
         item.setBetTime((int) (Math.random() * 16) + 5);
 
@@ -34,8 +32,8 @@ public class ItemService {
     /**
      * 상품조회
      */
-    public Item get(long itemNo) {
-        return itemRepository.get(itemNo);
+    public Optional<Item> get(long itemNo) {
+        return Optional.ofNullable(itemRepository.get(itemNo));
     }
 
     /**
@@ -51,6 +49,5 @@ public class ItemService {
     public void updateState(long itemNo, State state) {
         itemRepository.updateState(itemNo, state);
     }
-
 
 }
