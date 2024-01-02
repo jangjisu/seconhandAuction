@@ -1,6 +1,5 @@
 package com.js.secondhandauction.core.auction.service;
 
-import com.js.secondhandauction.common.exception.ErrorCode;
 import com.js.secondhandauction.core.auction.domain.Auction;
 import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
 import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
@@ -16,6 +15,7 @@ import com.js.secondhandauction.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -33,14 +33,14 @@ public class AuctionService {
 
     final int immediate_purchase_rate = 3;
 
-
-    public AuctionService(AuctionRepository auctionRepository) {
+public AuctionService(AuctionRepository auctionRepository) {
         this.auctionRepository = auctionRepository;
     }
 
     /**
      * 경매 등록
      */
+    @Transactional
     public long create(long itemNo, long regId, int bid) {
 
         User user = userService.get(regId);
@@ -62,7 +62,7 @@ public class AuctionService {
 
         boolean isTick = (countTick != 0);
 
-        int minBid = 0;
+        int minBid;
         boolean isImmediatePurchase;
         Auction lastTick = null;
 
@@ -91,6 +91,10 @@ public class AuctionService {
 
         userService.minusAmount(regId, bid);
 
+        if(isTick){
+            userService.plusAmount(lastTick.getRegId(), lastTick.getBid());
+        }
+
         Auction auction = new Auction();
         auction.setItemNo(itemNo);
         auction.setBid(bid);
@@ -100,9 +104,6 @@ public class AuctionService {
 
         //bet -1 번째 일 경우 경매 종료
         if(countTick == item.getBetTime()-1 || isImmediatePurchase) {
-            if(isTick){
-                userService.plusAmount(lastTick.getRegId(), lastTick.getBid());
-            }
 
             userService.plusAmount(item.getRegId(), bid);
 

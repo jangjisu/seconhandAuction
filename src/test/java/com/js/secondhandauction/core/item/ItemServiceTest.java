@@ -29,7 +29,7 @@ public class ItemServiceTest {
 
         long itemNo = itemService.create("에어팟", 200000, 1L);
 
-        System.out.println(itemNo);
+        //System.out.println(itemNo);
 
     }
 
@@ -38,7 +38,7 @@ public class ItemServiceTest {
     void getItem() {
         Item item = itemService.get(1L);
 
-        System.out.println(item.toString());
+
     }
 
     @Test

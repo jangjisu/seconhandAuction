@@ -1,7 +1,12 @@
 package com.js.secondhandauction.core.auction;
 
+import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
+import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
 import com.js.secondhandauction.core.auction.service.AuctionService;
+import com.js.secondhandauction.core.item.domain.Item;
+import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
 import com.js.secondhandauction.core.item.service.ItemService;
+import com.js.secondhandauction.core.user.exception.NotOverTotalBalanceException;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +61,7 @@ public class AuctionTest {
 
         duplicateAuction(itemId[0], userId[0]);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DuplicateUserTickException.class,
                 () -> duplicateAuction(itemId[0], userId[0]));
     }
 
@@ -72,9 +77,9 @@ public class AuctionTest {
         long[] userId = regUser();
         long[] itemId = regItem();
 
-        overAmount(itemId[0], itemId[1], userId[0]);
+        //overAmount(itemId[0], itemId[1], userId[0]);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(NotOverTotalBalanceException.class,
                 () -> overAmount(itemId[0], itemId[1], userId[0]));
     }
 
@@ -94,21 +99,27 @@ public class AuctionTest {
 
         //auctionService.create(itemId[0], userId[2], 1500000);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(AlreadySoldoutException.class,
                 () -> auctionService.create(itemId[0], userId[2], 1500000));
     }
 
     void auctionSuccess(long itemId, long userId1, long userId2) {
-        auctionService.create(itemId, userId1, 500000);
-        auctionService.create(itemId, userId2, 600000);
-        auctionService.create(itemId, userId1, 700000);
-        auctionService.create(itemId, userId2, 800000);
-        auctionService.create(itemId, userId1, 900000);
-        auctionService.create(itemId, userId2, 1000000);
-        auctionService.create(itemId, userId1, 1100000);
-        auctionService.create(itemId, userId2, 1200000);
-        auctionService.create(itemId, userId1, 1300000);
-        auctionService.create(itemId, userId2, 1400000);
+        int bid = 500000;
+
+        Item item = itemService.get(itemId);
+
+        for(int i=0; i<item.getBetTime(); i ++){
+            if(i%2 == 0){
+                auctionService.create(itemId, userId1, bid);
+            }else{
+                auctionService.create(itemId, userId2, bid);
+            }
+
+            System.out.println(userService.get(userId1).toString());
+            System.out.println(userService.get(userId2).toString());
+
+            bid += 100000;
+        }
     }
 
     @Test
@@ -120,7 +131,7 @@ public class AuctionTest {
 
         //auctionService.create(itemId[0], userId[0], 104000);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(NotOverMinBidException.class,
                 () -> auctionService.create(itemId[0], userId[0], 104000));
     }
 

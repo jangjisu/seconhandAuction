@@ -3,9 +3,11 @@ package com.js.secondhandauction.core.item.service;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
 import com.js.secondhandauction.core.item.repository.ItemRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class ItemService {
 
     ItemRepository itemRepository;
