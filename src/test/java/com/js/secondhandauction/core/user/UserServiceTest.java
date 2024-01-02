@@ -1,6 +1,7 @@
 package com.js.secondhandauction.core.user;
 
 import com.js.secondhandauction.core.user.domain.User;
+import com.js.secondhandauction.core.user.exception.CannotTotalBalanceMinusException;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +71,9 @@ public class UserServiceTest {
     @Test
     @DisplayName("금액 업데이트 실패 테스트")
     void updateFailAmount() {
-        assertThrows(IllegalArgumentException.class,
+        //userService.plusAmount(1L, -50000000);
+
+        assertThrows(CannotTotalBalanceMinusException.class,
                 () -> userService.plusAmount(1L, -50000000));
     }
 

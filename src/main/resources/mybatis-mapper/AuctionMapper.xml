@@ -13,9 +13,9 @@
 
     <select id="getLastTick">
         SELECT
-            item_no,
+            item_no itemNo,
             bid,
-            reg_id
+            reg_id regId
         FROM Auction
         WHERE (item_no, bid) IN (
             SELECT item_no, MAX(bid)
