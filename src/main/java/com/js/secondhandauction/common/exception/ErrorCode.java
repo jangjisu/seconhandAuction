@@ -12,6 +12,7 @@ public enum ErrorCode {
     CANNOT_TOTALBALANCE_MINUS("가진 금액이 마이너스가 될 수 없습니다."),
 
     //ITEM
+    NOT_FOUND_ITEM("존재하지 않는 아이템입니다."),
     ALREADY_SOLDOUT("이미 판매된 아이템입니다."),
 
     //AUCTION

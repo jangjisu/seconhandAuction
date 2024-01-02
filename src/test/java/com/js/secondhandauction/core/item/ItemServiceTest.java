@@ -2,6 +2,7 @@ package com.js.secondhandauction.core.item;
 
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
+import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.service.ItemService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -19,26 +20,23 @@ public class ItemServiceTest {
     @DisplayName("상품 생성 테스트")
     @Transactional
     void createItem() {
-        //Item item = new Item();
+        Item item = new Item();
 
+        item.setItem("에어팟");
+        item.setRegId(1L);
+        item.setRegPrice(10000);
 
-        //item.setItem("에어팟");
-        //item.setRegId(1L);
-        //item.setState(State.ONSALE);
-        //item.setRegPrice(10000);
+        long itemNo = itemService.create(item);
 
-        long itemNo = itemService.create("에어팟", 200000, 1L);
-
-        //System.out.println(itemNo);
-
+        Assertions.assertThat(item).isEqualTo(itemService.get(itemNo));
     }
 
     @Test
     @DisplayName("상품 조회 테스트")
     void getItem() {
-        Item item = itemService.get(1L);
+        Item item = itemService.get(1L).orElseThrow(NotFoundItemException::new);
 
-
+        Assertions.assertThat(item).isEqualTo(itemService.get(1L));
     }
 
     @Test
@@ -54,7 +52,7 @@ public class ItemServiceTest {
     void updateState() {
         itemService.updateState(1L, State.ONSALE);
 
-        Item item = itemService.get(1L);
+        Item item = itemService.get(1L).orElseThrow(NotFoundItemException::new);
 
         Assertions.assertThat(item.getState()).isEqualTo(State.ONSALE);
 

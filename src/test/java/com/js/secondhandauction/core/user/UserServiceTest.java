@@ -2,6 +2,7 @@ package com.js.secondhandauction.core.user;
 
 import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.exception.CannotTotalBalanceMinusException;
+import com.js.secondhandauction.core.user.exception.NotFoundUserException;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,7 +33,7 @@ public class UserServiceTest {
 
         //System.out.println("******* - id = " + user.getId());
         //System.out.println("======" + userService.getUser(user.getId()).getId());
-        Assertions.assertThat(id).isEqualTo(userService.get(id).getId());
+        Assertions.assertThat(id).isEqualTo(userService.get(id).orElseThrow(NotFoundUserException::new).getId());
 
     }
 
@@ -40,7 +43,7 @@ public class UserServiceTest {
     void getUser() {
         long id = 9L;
 
-        User user = userService.get(id);
+        User user = userService.get(id).orElseThrow(NotFoundUserException::new);
 
         Assertions.assertThat(user.getTotalBalance()).isEqualTo(10000000);
     }
@@ -50,7 +53,7 @@ public class UserServiceTest {
     void getFailUser() {
         long id = 10L;
 
-        User user = userService.get(id);
+        Optional<User> user = userService.get(id);
 
         Assertions.assertThat(user).isEqualTo(null);
     }
@@ -59,17 +62,18 @@ public class UserServiceTest {
     @DisplayName("금액 업데이트 성공 테스트")
     @Transactional
     void updateAmount() {
-        User user1 = userService.get(1L);
+        User user1 = userService.get(1L).orElseThrow(NotFoundUserException::new);
 
         userService.plusAmount(1L, -500000);
 
-        User user2 = userService.get(1L);
+        User user2 = userService.get(1L).orElseThrow(NotFoundUserException::new);
 
         Assertions.assertThat(user1.getTotalBalance()-500000).isEqualTo(user2.getTotalBalance());
     }
 
     @Test
     @DisplayName("금액 업데이트 실패 테스트")
+    @Transactional
     void updateFailAmount() {
         //userService.plusAmount(1L, -50000000);
 
