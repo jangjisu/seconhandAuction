@@ -34,11 +34,12 @@ public class UserServiceTest {
 
     private User user;
 
-    @BeforeEach void setup() {
-        user = new User();
-        user.setName("Test User");
+    @BeforeEach
+    void setup() {
+        user = User.builder()
+                .name("Test User")
+                .build();
     }
-
 
 
     @Test

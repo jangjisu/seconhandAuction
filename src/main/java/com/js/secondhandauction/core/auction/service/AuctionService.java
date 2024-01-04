@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Slf4j
 public class AuctionService {
@@ -67,6 +69,13 @@ public class AuctionService {
         }
 
         return auction;
+    }
+
+    /**
+     * 경매 조회
+     */
+    public List<Auction> getAuctions(long itemNo) {
+        return auctionRepository.findByItemNo(itemNo);
     }
 
     private void validateUser(Auction auction) {

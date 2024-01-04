@@ -52,21 +52,24 @@ public class AuctionServiceTest {
 
     @BeforeEach
     public void setup() {
-        User user = new User();
-        user.setId(USER_ID);
-        user.setName("Test User");
+        User user = User.builder()
+                .id(USER_ID)
+                .name("Test User")
+                .build();
 
-        Item item = new Item();
-        item.setItemNo(ITEM_ID);
-        item.setItem("Test Item");
-        item.setState(State.ONSALE);
-        item.setBetTime(5);
-        item.setRegPrice(300000);
+        Item item = Item.builder()
+                .itemNo(ITEM_ID)
+                .item("Test Item")
+                .state(State.ONSALE)
+                .betTime(5)
+                .regPrice(300000)
+                .build();
 
-        auction = new Auction();
-        auction.setBid(500000);
-        auction.setItemNo(ITEM_ID);
-        auction.setRegId(USER_ID);
+        auction = Auction.builder()
+                .bid(500000)
+                .itemNo(ITEM_ID)
+                .regId(USER_ID)
+                .build();
 
         Mockito.when(userService.getUser(Mockito.anyLong())).thenReturn(user);
         Mockito.when(itemService.getItem(Mockito.anyLong())).thenReturn(item);
@@ -91,10 +94,12 @@ public class AuctionServiceTest {
 
         Mockito.when(auctionRepository.getCountTick(Mockito.anyLong())).thenReturn(1);
 
-        Auction lastTick = new Auction();
-        lastTick.setBid(400000);
-        lastTick.setRegId(USER_ID);
-        lastTick.setItemNo(ITEM_ID);
+        Auction lastTick = Auction.builder()
+                .bid(400000)
+                .regId(USER_ID)
+                .itemNo(ITEM_ID)
+                .build();
+
 
         Mockito.when(auctionRepository.getLastTick(Mockito.anyLong())).thenReturn(lastTick);
 
@@ -109,10 +114,11 @@ public class AuctionServiceTest {
 
         Mockito.when(auctionRepository.getCountTick(Mockito.anyLong())).thenReturn(1);
 
-        Auction lastTick = new Auction();
-        lastTick.setBid(400000);
-        lastTick.setRegId(100L);
-        lastTick.setItemNo(ITEM_ID);
+        Auction lastTick = Auction.builder()
+                .bid(400000)
+                .regId(100L)
+                .itemNo(ITEM_ID)
+                .build();
 
         Mockito.when(auctionRepository.getLastTick(Mockito.anyLong())).thenReturn(lastTick);
 

@@ -2,6 +2,7 @@ package com.js.secondhandauction.core.item;
 
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
+import com.js.secondhandauction.core.item.dto.ItemCreateRequest;
 import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.repository.ItemRepository;
 import com.js.secondhandauction.core.item.service.ItemService;
@@ -37,12 +38,17 @@ public class ItemServiceTest {
 
     private Item item;
 
-    @BeforeEach void setup() {
-        item = new Item();
+    private ItemCreateRequest itemCreateRequest;
 
-        item.setItem("Test Item");
-        item.setRegId(1L);
-        item.setRegPrice(200000);
+    @BeforeEach
+    void setup() {
+        item = Item.builder()
+                .item("Test Item")
+                .regId(1L)
+                .regPrice(200000)
+                .build();
+
+        itemCreateRequest = new ItemCreateRequest("Test Item", 200000, 1L);
     }
 
     @Test
@@ -50,7 +56,7 @@ public class ItemServiceTest {
     void testCreateItem() {
         when(itemRepository.create(any(Item.class))).thenReturn(anyLong());
 
-        Item createdItem = itemService.createItem(item);
+        Item createdItem = itemService.createItem(itemCreateRequest);
 
         assertNotNull(createdItem);
         Assertions.assertThat(State.ONSALE).isEqualTo(createdItem.getState());
@@ -77,7 +83,7 @@ public class ItemServiceTest {
         when(itemRepository.findByItemNo(anyLong())).thenReturn(Optional.empty());
 
         assertThrows(NotFoundItemException.class,
-        () -> itemService.getItem(1L));
+                () -> itemService.getItem(1L));
     }
 
     @Test
@@ -94,7 +100,7 @@ public class ItemServiceTest {
     void testUpdateState() {
         // 상품 생성
         when(itemRepository.create(any(Item.class))).thenReturn(anyLong());
-        Item createdItem = itemService.createItem(item);
+        Item createdItem = itemService.createItem(itemCreateRequest);
 
         // 상태 변경
         when(itemRepository.updateState(anyLong(), any(State.class))).thenReturn(1);
