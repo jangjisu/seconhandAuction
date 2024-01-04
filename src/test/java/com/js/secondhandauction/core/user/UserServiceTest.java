@@ -3,82 +3,93 @@ package com.js.secondhandauction.core.user;
 import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.exception.CannotTotalBalanceMinusException;
 import com.js.secondhandauction.core.user.exception.NotFoundUserException;
+import com.js.secondhandauction.core.user.repository.UserRepository;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-    @Autowired
-    UserService userService;
+    @InjectMocks
+    private UserService userService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    private User user;
+
+    @BeforeEach void setup() {
+        user = new User();
+        user.setName("Test User");
+    }
+
 
 
     @Test
-    @DisplayName("유저 생성 테스트")
-    @Transactional
-    void createUser() {
-        User user = new User();
-        //user.setAmount(1000000);
-        user.setName("test2");
+    @DisplayName("유저를 생성한다")
+    void testCreateUser() {
+        when(userRepository.create(any(User.class))).thenReturn(anyLong());
 
-        long id = userService.create(user);
+        User createdUser = userService.createUser(user);
 
-        //System.out.println("******* - id = " + user.getId());
-        //System.out.println("======" + userService.getUser(user.getId()).getId());
-        Assertions.assertThat(id).isEqualTo(userService.get(id).orElseThrow(NotFoundUserException::new).getId());
-
+        assertNotNull(createdUser);
+        Assertions.assertThat(10000000).isEqualTo(user.getTotalBalance());
+        Mockito.verify(userRepository, times(1)).create(any(User.class));
     }
 
     @Test
-    @DisplayName("유저 조회 테스트")
-    @Transactional
-    void getUser() {
-        long id = 9L;
+    @DisplayName("유저를 조회한다")
+    void testGetUser() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
-        User user = userService.get(id).orElseThrow(NotFoundUserException::new);
+        User getUser = userService.getUser(10L);
 
-        Assertions.assertThat(user.getTotalBalance()).isEqualTo(10000000);
+        Assertions.assertThat("Test User").isEqualTo(getUser.getName());
+        Mockito.verify(userRepository, times(1)).findById(anyLong());
     }
 
     @Test
-    @DisplayName("유저 조회 실패 테스트")
-    void getFailUser() {
-        long id = 10L;
+    @DisplayName("유저가 없어 유저 조회를 실패한다")
+    void testGetUserThrowNotFoundUserException() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        Optional<User> user = userService.get(id);
-
-        Assertions.assertThat(user).isEqualTo(null);
+        assertThrows(NotFoundUserException.class,
+                () -> userService.getUser(10L));
     }
 
     @Test
-    @DisplayName("금액 업데이트 성공 테스트")
-    @Transactional
-    void updateAmount() {
-        User user1 = userService.get(1L).orElseThrow(NotFoundUserException::new);
+    @DisplayName("사용자의 자금을 변경한다")
+    void testUpdateTotalBalance() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
-        userService.plusAmount(1L, -500000);
+        userService.updateUserTotalBalance(10L, 500000);
 
-        User user2 = userService.get(1L).orElseThrow(NotFoundUserException::new);
-
-        Assertions.assertThat(user1.getTotalBalance()-500000).isEqualTo(user2.getTotalBalance());
+        Mockito.verify(userRepository, times(1)).updateTotalBalance(anyLong(), anyInt());
     }
 
     @Test
-    @DisplayName("금액 업데이트 실패 테스트")
-    @Transactional
-    void updateFailAmount() {
-        //userService.plusAmount(1L, -50000000);
+    @DisplayName("사용자 자금보다 더 큰 금액을 빼려 해 변경에 실패한다")
+    void testUpdateTotalBalanceThrowException() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
         assertThrows(CannotTotalBalanceMinusException.class,
-                () -> userService.plusAmount(1L, -50000000));
+                () -> userService.updateUserTotalBalance(10L, -20000000));
     }
 
 }
