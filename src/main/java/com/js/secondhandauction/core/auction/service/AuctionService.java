@@ -7,10 +7,8 @@ import com.js.secondhandauction.core.auction.repository.AuctionRepository;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
 import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
-import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.service.ItemService;
 import com.js.secondhandauction.core.user.domain.User;
-import com.js.secondhandauction.core.user.exception.NotFoundUserException;
 import com.js.secondhandauction.core.user.exception.NotOverTotalBalanceException;
 import com.js.secondhandauction.core.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,15 +34,12 @@ public class AuctionService {
     final int IMMEDIATE_PURCHASE_RATE_START_PRICE = 3;
     final int IMMEDIATE_PURCHASE_RATE_LAST_BID = 2;
 
-public AuctionService(AuctionRepository auctionRepository) {
-        this.auctionRepository = auctionRepository;
-    }
 
     /**
      * 경매 등록
      */
     @Transactional
-    public long create(Auction auction) {
+    public Auction createAuction(Auction auction) {
 
         validateUser(auction);
 
@@ -57,27 +52,27 @@ public AuctionService(AuctionRepository auctionRepository) {
         boolean isImmediatePurchase;
         Auction lastTick = null;
 
-        if(isTick){
+        if (isTick) {
             lastTick = validateBidForExistingTicks(auction, item.getRegPrice());
             isImmediatePurchase = isImmediatelyPurchasableByLastBid(lastTick.getBid(), auction.getBid());
-        }else{
+        } else {
             validateBidForInitialBid(item, auction.getBid());
             isImmediatePurchase = isImmediatelyPurchasableByRegPrice(item.getRegPrice(), auction.getBid());
         }
 
         updateUserBalanceAndCreateAuction(auction, lastTick);
 
-        if(isFinalBid(countTick, item.getBetTime()) || isImmediatePurchase) {
+        if (isFinalBid(countTick, item.getBetTime()) || isImmediatePurchase) {
             finishAuction(auction, item);
         }
 
-        return auction.getAuctionNo();
+        return auction;
     }
 
     private void validateUser(Auction auction) {
-        User user = userService.get(auction.getRegId()).orElseThrow(NotFoundUserException::new);
+        User user = userService.getUser(auction.getRegId());
 
-        if(user.getTotalBalance() < auction.getBid()){
+        if (user.getTotalBalance() < auction.getBid()) {
             throw new NotOverTotalBalanceException();
         }
 
@@ -85,20 +80,21 @@ public AuctionService(AuctionRepository auctionRepository) {
     }
 
     private Item validateItem(Auction auction) {
-        Item item = itemService.get(auction.getItemNo()).orElseThrow(NotFoundItemException::new);
+        Item item = itemService.getItem(auction.getItemNo());
 
         //상수 Equals 변수 형식으로 변경
-        if(State.SOLDOUT.equals(item.getState())){
+        if (State.SOLDOUT.equals(item.getState())) {
             throw new AlreadySoldoutException();
         }
 
         return item;
+
     }
 
     private Auction validateBidForExistingTicks(Auction auction, int regPrice) {
         Auction lastTick = auctionRepository.getLastTick(auction.getItemNo());
 
-        if(lastTick.getRegId() == auction.getRegId()) {
+        if (lastTick.getRegId() == auction.getRegId()) {
             throw new DuplicateUserTickException();
         }
 
@@ -109,6 +105,7 @@ public AuctionService(AuctionRepository auctionRepository) {
         }
 
         return lastTick;
+
     }
 
     private void validateBidForInitialBid(Item item, int bid) {
@@ -129,23 +126,23 @@ public AuctionService(AuctionRepository auctionRepository) {
 
 
     private void updateUserBalanceAndCreateAuction(Auction auction, Auction lastTick) {
-        userService.minusAmount(auction.getRegId(), auction.getBid());
+        userService.updateUserTotalBalance(auction.getRegId(), auction.getBid() * -1);
 
-        if(lastTick != null){
-            userService.plusAmount(lastTick.getRegId(), lastTick.getBid());
+        if (lastTick != null) {
+            userService.updateUserTotalBalance(lastTick.getRegId(), lastTick.getBid());
         }
 
         auctionRepository.create(auction);
     }
 
     private boolean isFinalBid(int countTick, int betTime) {
-        return betTime-1 == countTick;
+        return betTime - 1 == countTick;
     }
 
     private void finishAuction(Auction auction, Item item) {
-        userService.plusAmount(item.getRegId(), auction.getBid());
+        userService.updateUserTotalBalance(item.getRegId(), auction.getBid());
 
-        itemService.updateState(item.getItemNo(), State.SOLDOUT);
+        itemService.updateItemState(item.getItemNo(), State.SOLDOUT);
 
         //log.debug("{}({}) 입찰 종료", item.getItem(), itemNo);
         log.debug(item.getItem() + "(" + item.getItemNo() + ") 입찰 종료");
