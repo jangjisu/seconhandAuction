@@ -11,7 +11,7 @@
         values (#{item}, NOW(), NOW(), #{regPrice}, #{state}, #{regId}, #{betTime})
     </insert>
 
-    <select id="get" resultType="com.js.secondhandauction.core.item.domain.Item">
+    <select id="findByItemNo" resultType="com.js.secondhandauction.core.item.domain.Item">
     <![CDATA[
         select item_no,
                item,

@@ -13,8 +13,7 @@
         ]]>
     </insert>
 
-    <select id="get">
-    <![CDATA[
+    <select id="findById">
         select id,
                name,
                total_balance,
@@ -22,7 +21,6 @@
                upt_date
         from Users
         where id = #{id}
-        ]]>
     </select>
 
     <update id="updateTotalBalance">

@@ -4,6 +4,8 @@ import com.js.secondhandauction.core.auction.domain.Auction;
 import com.js.secondhandauction.core.item.domain.Item;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface AuctionRepository {
 
@@ -13,4 +15,5 @@ public interface AuctionRepository {
 
     int getCountTick(long item_no);
 
+    List<Auction> findByItemNo(long itemNo);
 }

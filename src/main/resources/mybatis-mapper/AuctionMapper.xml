@@ -33,4 +33,16 @@
         where item_no = #{itemNo}
         ]]>
     </select>
+
+    <select id="findByItemNo">
+        <![CDATA[
+        select auction_no,
+               item_no,
+               bid,
+               reg_id,
+               reg_date
+        from Auction
+        where item_no = #{itemNo}
+        ]]>
+    </select>
 </mapper>

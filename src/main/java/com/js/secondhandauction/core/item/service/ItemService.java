@@ -2,6 +2,7 @@ package com.js.secondhandauction.core.item.service;
 
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
+import com.js.secondhandauction.core.item.dto.ItemCreateRequest;
 import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.repository.ItemRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,9 @@ public class ItemService {
     /**
      * 상품등록
      */
-    public Item createItem(Item item) {
+    public Item createItem(ItemCreateRequest itemCreateRequest) {
+        Item item = itemCreateRequest.toEntity();
+
         item.setState(State.ONSALE);
         item.setBetTime((int) (Math.random() * 16) + 5);
 
