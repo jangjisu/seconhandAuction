@@ -1,6 +1,8 @@
 package com.js.secondhandauction.core.auction.service;
 
 import com.js.secondhandauction.core.auction.domain.Auction;
+import com.js.secondhandauction.core.auction.dto.AuctionRequest;
+import com.js.secondhandauction.core.auction.dto.AuctionResponse;
 import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
 import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
 import com.js.secondhandauction.core.auction.repository.AuctionRepository;
@@ -41,7 +43,9 @@ public class AuctionService {
      * 경매 등록
      */
     @Transactional
-    public Auction createAuction(Auction auction) {
+    public AuctionResponse createAuction(long userId, AuctionRequest auctionRequest) {
+        Auction auction = auctionRequest.toEntity();
+        auction.setRegId(userId);
 
         validateUser(auction);
 
@@ -68,7 +72,7 @@ public class AuctionService {
             finishAuction(auction, item);
         }
 
-        return auction;
+        return auction.toResponse();
     }
 
     /**

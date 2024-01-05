@@ -1,18 +1,16 @@
 package com.js.secondhandauction.core.auction;
 
 import com.js.secondhandauction.core.auction.domain.Auction;
+import com.js.secondhandauction.core.auction.dto.AuctionRequest;
+import com.js.secondhandauction.core.auction.dto.AuctionResponse;
 import com.js.secondhandauction.core.auction.exception.DuplicateUserTickException;
 import com.js.secondhandauction.core.auction.exception.NotOverMinBidException;
 import com.js.secondhandauction.core.auction.repository.AuctionRepository;
 import com.js.secondhandauction.core.auction.service.AuctionService;
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
-import com.js.secondhandauction.core.item.exception.AlreadySoldoutException;
-import com.js.secondhandauction.core.item.repository.ItemRepository;
 import com.js.secondhandauction.core.item.service.ItemService;
 import com.js.secondhandauction.core.user.domain.User;
-import com.js.secondhandauction.core.user.exception.NotOverTotalBalanceException;
-import com.js.secondhandauction.core.user.repository.UserRepository;
 import com.js.secondhandauction.core.user.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,11 +41,13 @@ public class AuctionServiceTest {
     private ItemService itemService;
 
 
-    public static long USER_ID = 1L;
+    private final long USER_ID = 1L;
 
-    public static long ITEM_ID = 2L;
+    private final long ITEM_ID = 2L;
 
     private Auction auction;
+
+    private AuctionRequest auctionRequest;
 
 
     @BeforeEach
@@ -71,6 +71,8 @@ public class AuctionServiceTest {
                 .regId(USER_ID)
                 .build();
 
+        auctionRequest = new AuctionRequest(ITEM_ID, 500000);
+
         Mockito.when(userService.getUser(Mockito.anyLong())).thenReturn(user);
         Mockito.when(itemService.getItem(Mockito.anyLong())).thenReturn(item);
     }
@@ -81,7 +83,7 @@ public class AuctionServiceTest {
 
         Mockito.when(auctionRepository.getCountTick(Mockito.anyLong())).thenReturn(0);
 
-        Auction createdAuction = auctionService.createAuction(auction);
+        AuctionResponse createdAuction = auctionService.createAuction(USER_ID, auctionRequest);
         assertNotNull(createdAuction);
         assertThat(createdAuction.getBid()).isEqualTo(500000);
 
@@ -104,7 +106,7 @@ public class AuctionServiceTest {
         Mockito.when(auctionRepository.getLastTick(Mockito.anyLong())).thenReturn(lastTick);
 
         Assertions.assertThrows(DuplicateUserTickException.class,
-                () -> auctionService.createAuction(auction));
+                () -> auctionService.createAuction(USER_ID, auctionRequest));
 
     }
 
@@ -125,7 +127,7 @@ public class AuctionServiceTest {
         auction.setBid(410000);
 
         Assertions.assertThrows(NotOverMinBidException.class,
-                () -> auctionService.createAuction(auction));
+                () -> auctionService.createAuction(USER_ID, auctionRequest));
 
     }
 

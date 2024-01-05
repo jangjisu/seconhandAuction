@@ -19,10 +19,8 @@
                bid,
                reg_id
         FROM Auction
-        WHERE (item_no, bid) IN (SELECT item_no, MAX(bid)
-                                 FROM Auction
-                                 WHERE ITEM_NO = #{itemNo}
-                                 GROUP BY item_no)
+        WHERE item_no = #{itemNo}
+          AND bid = (SELECT MAX(bid) FROM Auction WHERE item_no = #{itemNo})
         ]]>
     </select>
 

@@ -2,7 +2,8 @@ package com.js.secondhandauction.core.item;
 
 import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.item.domain.State;
-import com.js.secondhandauction.core.item.dto.ItemCreateRequest;
+import com.js.secondhandauction.core.item.dto.ItemRequest;
+import com.js.secondhandauction.core.item.dto.ItemResponse;
 import com.js.secondhandauction.core.item.exception.NotFoundItemException;
 import com.js.secondhandauction.core.item.repository.ItemRepository;
 import com.js.secondhandauction.core.item.service.ItemService;
@@ -15,10 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,17 +37,19 @@ public class ItemServiceTest {
 
     private Item item;
 
-    private ItemCreateRequest itemCreateRequest;
+    private ItemRequest itemRequest;
+
+    private final long USER_ID = 1L;
 
     @BeforeEach
     void setup() {
         item = Item.builder()
                 .item("Test Item")
-                .regId(1L)
+                .regId(USER_ID)
                 .regPrice(200000)
                 .build();
 
-        itemCreateRequest = new ItemCreateRequest("Test Item", 200000, 1L);
+        itemRequest = new ItemRequest("Test Item", 200000);
     }
 
     @Test
@@ -56,11 +57,10 @@ public class ItemServiceTest {
     void testCreateItem() {
         when(itemRepository.create(any(Item.class))).thenReturn(anyLong());
 
-        Item createdItem = itemService.createItem(itemCreateRequest);
+        ItemResponse createdItem = itemService.createItem(USER_ID, itemRequest);
 
         assertNotNull(createdItem);
         Assertions.assertThat(State.ONSALE).isEqualTo(createdItem.getState());
-        Assertions.assertThat(createdItem.getBetTime()).isBetween(5, 20);
 
         Mockito.verify(itemRepository, times(1)).create(any(Item.class));
     }
@@ -91,7 +91,7 @@ public class ItemServiceTest {
     void testIsOnSale() {
         when(itemRepository.getState(anyLong())).thenReturn(State.ONSALE);
 
-        Assertions.assertThat(itemService.isItemOnSale(1L)).isEqualTo(true);
+        Assertions.assertThat(itemService.getItemState(1L)).isEqualTo(State.ONSALE);
         Mockito.verify(itemRepository, times(1)).getState(anyLong());
     }
 
@@ -100,7 +100,7 @@ public class ItemServiceTest {
     void testUpdateState() {
         // 상품 생성
         when(itemRepository.create(any(Item.class))).thenReturn(anyLong());
-        Item createdItem = itemService.createItem(itemCreateRequest);
+        ItemResponse createdItem = itemService.createItem(USER_ID, itemRequest);
 
         // 상태 변경
         when(itemRepository.updateState(anyLong(), any(State.class))).thenReturn(1);
@@ -108,10 +108,31 @@ public class ItemServiceTest {
 
         // 상태 확인
         when(itemRepository.getState(anyLong())).thenReturn(State.SOLDOUT); // getState() 메소드를 Mocking
-        Assertions.assertThat(itemService.isItemOnSale(createdItem.getItemNo())).isEqualTo(false);
+        Assertions.assertThat(itemService.getItemState(createdItem.getItemNo())).isEqualTo(State.SOLDOUT);
 
         // Mocking된 메소드가 호출되었는지 검증
         Mockito.verify(itemRepository, times(1)).updateState(anyLong(), any(State.class));
         Mockito.verify(itemRepository, times(1)).getState(anyLong());
     }
+
+    @Test
+    @DisplayName("상품을 수정한다")
+    void testUpdateItem() {
+        // 상품 생성
+        when(itemRepository.create(any(Item.class))).thenReturn(anyLong());
+        ItemResponse createdItem = itemService.createItem(USER_ID, itemRequest);
+
+        when(itemRepository.getState(anyLong())).thenReturn(State.UNSOLD);
+
+        // 상품 수정
+        when(itemRepository.updateForUnsold(any(Item.class))).thenReturn(1);
+        ItemRequest itemUpdateRequest = new ItemRequest("Updated Item", 300000);
+        ItemResponse imemUpadteRequest = itemService.updateItem(createdItem.getItemNo(), USER_ID, itemUpdateRequest);
+
+        Assertions.assertThat(imemUpadteRequest.getItem()).isEqualTo("Updated Item");
+
+        // Mocking된 메소드가 호출되었는지 검증
+        Mockito.verify(itemRepository, times(1)).updateForUnsold(any(Item.class));
+    }
+
 }

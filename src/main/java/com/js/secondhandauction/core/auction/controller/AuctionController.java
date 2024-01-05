@@ -1,6 +1,8 @@
 package com.js.secondhandauction.core.auction.controller;
 
 import com.js.secondhandauction.core.auction.domain.Auction;
+import com.js.secondhandauction.core.auction.dto.AuctionRequest;
+import com.js.secondhandauction.core.auction.dto.AuctionResponse;
 import com.js.secondhandauction.core.auction.service.AuctionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +17,12 @@ public class AuctionController {
     @Autowired
     private AuctionService auctionService;
 
+    //TODO
+    final long userId = 1L;
+
     @PostMapping
-    public ResponseEntity<Auction> createAuction(@RequestBody Auction auction) {
-        return ResponseEntity.ok(auctionService.createAuction(auction));
+    public ResponseEntity<AuctionResponse> createAuction(@RequestBody AuctionRequest auctionRequest) {
+        return ResponseEntity.ok(auctionService.createAuction(userId , auctionRequest));
     }
 
     @GetMapping("/{itemNo}")

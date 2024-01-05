@@ -1,5 +1,6 @@
 package com.js.secondhandauction.core.auction.domain;
 
+import com.js.secondhandauction.core.auction.dto.AuctionResponse;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,5 +30,13 @@ public class Auction {
         this.bid = bid;
         this.regId = regId;
         this.regDate = regDate;
+    }
+
+    public AuctionResponse toResponse() {
+        return AuctionResponse.builder()
+                .auctionNo(auctionNo)
+                .itemNo(itemNo)
+                .bid(bid)
+                .build();
     }
 }

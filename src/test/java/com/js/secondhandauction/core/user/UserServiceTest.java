@@ -1,5 +1,6 @@
 package com.js.secondhandauction.core.user;
 
+import com.js.secondhandauction.core.item.domain.Item;
 import com.js.secondhandauction.core.user.domain.User;
 import com.js.secondhandauction.core.user.exception.CannotTotalBalanceMinusException;
 import com.js.secondhandauction.core.user.exception.NotFoundUserException;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,6 @@
 package com.js.secondhandauction.core.item.domain;
 
+import com.js.secondhandauction.core.item.dto.ItemResponse;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,5 +39,14 @@ public class Item {
         this.state = state;
         this.regId = regId;
         this.betTime = betTime;
+    }
+
+    public ItemResponse toResponse() {
+        return ItemResponse.builder()
+                .itemNo(itemNo)
+                .item(item)
+                .regPrice(regPrice)
+                .state(state)
+                .build();
     }
 }
